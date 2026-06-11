@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0B0D">
+<title>Park Lane — Новая глава</title>
+<meta name="description" content="Park Lane × Gastro Ultima. Новая глава.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+:root{
+  --bg:#0B0B0D; --coal:#14110E; --gold:#C2A361; --wine:#6E3B5C;
+  --ivory:#F2ECE0; --muted:#9A9388;
+  --col:min(100vw,480px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-snap-type:y proximity}
+body{background:var(--bg);color:var(--ivory);font-family:'Manrope',sans-serif;overflow-x:hidden}
+img,video{display:block}
+
+/* ---------- драйвер скролла: якоря сцен + зоны покадровой перемотки ---------- */
+.step{height:100svh;scroll-snap-align:start}
+.scrub{/* высота задаётся из JS: длиннее ролик — длиннее перемотка */}
+
+/* ---------- фиксированная кино-сцена ---------- */
+#stage{
+  position:fixed;inset:0;left:50%;transform:translateX(-50%);
+  width:var(--col);height:100svh;overflow:hidden;background:var(--bg);
+}
+#stage .bg{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;will-change:opacity,transform;
+}
+#stage .bg.kb{animation:kenburns 10s ease-out forwards}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.05)}}
+#stage video{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;will-change:opacity;
+}
+#scrim{
+  position:absolute;inset:0;pointer-events:none;opacity:.45;
+  background:linear-gradient(180deg,rgba(11,11,13,.55) 0%,rgba(11,11,13,0) 30%,rgba(11,11,13,0) 52%,rgba(11,11,13,.74) 100%);
+}
+#dim{position:absolute;inset:0;pointer-events:none;background:var(--bg);opacity:0}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+/* ---------- текстовый слой ---------- */
+#ui{
+  position:fixed;inset:0;left:50%;transform:translateX(-50%);
+  width:var(--col);height:100svh;pointer-events:none;z-index:5;
+}
+.scene{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:0 26px calc(12svh + env(safe-area-inset-bottom));
+  opacity:0;visibility:hidden;
+}
+.scene.center{justify-content:center;text-align:center;padding-bottom:0}
+.scene .inner{text-shadow:0 1px 4px rgba(11,11,13,.55),0 4px 26px rgba(11,11,13,.5)}
+.scene .inner>*{opacity:0;transform:translateY(28px)}
+.eyebrow{
+  font-size:14px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;
+}
+.eyebrow::before{
+  content:"";display:inline-block;width:30px;height:1px;background:var(--gold);
+  vertical-align:middle;margin-right:14px;opacity:.8;
+}
+.center .eyebrow::before{display:none}
+h1,h2{font-family:'Playfair Display',serif;font-weight:600;line-height:1.08;text-wrap:balance}
+h1{font-size:clamp(48px,14vw,66px);letter-spacing:.01em}
+h2{font-size:clamp(32px,9.6vw,44px)}
+.aphorism{
+  font-family:'Playfair Display',serif;font-style:italic;font-weight:400;
+  font-size:clamp(29px,8.2vw,38px);line-height:1.32;text-wrap:balance;
+}
+.lede{font-size:21px;line-height:1.62;font-weight:400;color:var(--ivory);margin-top:16px}
+.lede em{font-style:normal;color:var(--gold)}
+.sub{font-size:18px;line-height:1.68;color:#B6AFA2;margin-top:12px}
+.bigfact{font-family:'Playfair Display',serif;font-size:clamp(52px,17vw,84px);color:var(--gold);line-height:1;letter-spacing:.02em}
+.bigfact .star{letter-spacing:.08em}
+.factname{font-size:16px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--ivory);margin-top:20px}
+.facttext{font-size:20px;line-height:1.62;color:#D6CFC2;margin-top:14px;max-width:30ch}
+.center .facttext{margin-left:auto;margin-right:auto}
+.quote{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(30px,8.6vw,38px);line-height:1.38}
+.quote-author{margin-top:24px;font-size:14px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.rule{width:46px;height:1px;background:var(--gold);opacity:.85;margin:0 0 20px}
+.center .rule{margin:0 auto 20px}
+
+/* список недель / системы */
+.rows{margin-top:8px}
+.row{display:flex;gap:16px;padding:15px 0;border-bottom:1px solid rgba(194,163,97,.18);align-items:baseline}
+.row:last-child{border-bottom:none}
+.row .n{font-family:'Playfair Display',serif;color:var(--gold);font-size:26px;min-width:40px}
+.row .t{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.row .d{display:block;font-size:17px;color:#B6AFA2;font-weight:400;letter-spacing:0;text-transform:none;margin-top:6px;line-height:1.58}
+
+/* ---------- CTA ---------- */
+.btn{
+  pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:12px;
+  width:100%;padding:21px 24px;margin-top:32px;
+  background:linear-gradient(135deg,#D8BC7E 0%,var(--gold) 45%,#9E8147 100%);
+  color:#121008;text-decoration:none;border-radius:2px;
+  font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  box-shadow:0 10px 36px rgba(194,163,97,.28);
+}
+.btn svg{flex:none}
+#fab{
+  position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;
+  width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#D8BC7E,#9E8147);color:#121008;
+  box-shadow:0 8px 28px rgba(0,0,0,.5),0 0 0 1px rgba(242,236,224,.12);
+  opacity:0;visibility:hidden;transform:translateY(14px);
+  transition:opacity .5s ease,transform .5s ease,visibility .5s;
+}
+#fab.on{opacity:1;visibility:visible;transform:none}
+
+/* ---------- прогресс фильма ---------- */
+#progress{position:fixed;top:0;left:50%;transform:translateX(-50%);width:var(--col);height:2px;z-index:40;background:rgba(242,236,224,.07)}
+#progress i{display:block;height:100%;width:0;background:var(--gold)}
+
+/* ---------- подсказка скролла ---------- */
+#hint{
+  position:fixed;bottom:calc(26px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+  z-index:20;display:flex;flex-direction:column;align-items:center;gap:9px;
+  font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);
+  transition:opacity .6s ease;
+}
+#hint span{display:block;width:1px;height:36px;background:linear-gradient(180deg,var(--gold),transparent);animation:drop 1.8s ease-in-out infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- киноплёнка: зерно + виньетка ---------- */
+#film{position:fixed;inset:0;z-index:50;pointer-events:none}
+#film .vignette{position:absolute;inset:0;background:radial-gradient(ellipse 120% 100% at 50% 45%,transparent 58%,rgba(5,4,3,.55) 100%)}
+#film .grain{
+  position:absolute;inset:-120%;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.04;animation:grain 7s steps(10) infinite;
+}
+@keyframes grain{
+  0%,100%{transform:translate(0,0)}10%{transform:translate(-5%,-8%)}20%{transform:translate(-12%,3%)}
+  30%{transform:translate(6%,-12%)}40%{transform:translate(-4%,14%)}50%{transform:translate(-12%,7%)}
+  60%{transform:translate(12%,0)}70%{transform:translate(0,10%)}80%{transform:translate(3%,12%)}90%{transform:translate(-8%,4%)}
+}
+
+/* ---------- прелоадер ---------- */
+#preloader{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+#preloader video{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:100%;width:var(--col);object-fit:cover}
+#preloader .pl-veil{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(11,11,13,.78) 100%)}
+#plbar{position:absolute;bottom:calc(15svh);left:50%;transform:translateX(-50%);width:min(46vw,200px);height:1px;background:rgba(242,236,224,.14)}
+#plbar i{display:block;height:100%;width:0;background:var(--gold);box-shadow:0 0 12px rgba(194,163,97,.8);transition:width .4s ease}
+#plword{position:absolute;bottom:calc(15svh + 18px);left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.44em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- десктоп: вертикальный кадр на чёрном ---------- */
+@media (min-width:521px){
+  body::before{content:"";position:fixed;inset:0;background:#050505;z-index:-1}
+  #stage,#ui{box-shadow:0 0 120px rgba(0,0,0,.9)}
+}
+@media (prefers-reduced-motion:reduce){
+  .scene .inner>*{transform:none}
+  #stage .bg.kb,#film .grain,#hint span{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- прелоадер: жидкое золото отливает логотип -->
+<div id="preloader">
+  <video id="plvid" muted playsinline autoplay loop src="media/web/loader.mp4"></video>
+  <div class="pl-veil"></div>
+  <div id="plword">Park Lane</div>
+  <div id="plbar"><i></i></div>
+</div>
+
+<!-- кино-сцена -->
+<div id="stage">
+  <img class="bg" id="bgA" alt="">
+  <img class="bg" id="bgB" alt="">
+  <div id="vids"></div>
+  <div id="scrim"></div>
+  <div id="dim"></div>
+  <canvas id="fx"></canvas>
+</div>
+
+<!-- текстовый слой (сцены наполняются из JS) -->
+<div id="ui"></div>
+
+<div id="progress"><i></i></div>
+
+<div id="hint"><span></span>листайте</div>
+
+<a id="fab" href="media/KP.pdf" download aria-label="Скачать коммерческое предложение">
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/></svg>
+</a>
+
+<!-- плёнка поверх всего -->
+<div id="film"><div class="vignette"></div><div class="grain"></div></div>
+
+<!-- спейсеры добавит JS -->
+<div id="track"></div>
+
+<script>
+/* =====================================================================
+   PARK LANE — сайт-фильм с покадровой перемоткой.
+   Скролл — это таймлайн: между якорями сцен лежат длинные зоны,
+   в которых кадр VFX-перехода напрямую привязан к позиции скролла.
+   Скроллишь вперёд — фильм идёт вперёд, назад — отматывается назад.
+   ===================================================================== */
+const W = 'media/web/';
+const BLACK = null;
+
+/* video — переход, ВЪЕЗЖАЮЩИЙ в эту сцену; bg — кадр-фон сцены в покое
+   (= последний кадр этого перехода); dim — затемнение под текст. */
+const SCENES = [
+  { bg: W+'T1_first.jpg', dim:.12, center:true, html:`
+      <h1>PARK LANE</h1>
+      <p class="lede" style="font-family:'Playfair Display',serif;font-style:italic;font-size:22px">Новая глава.</p>` },
+
+  { bg: W+'T1_last.jpg', video:'T1', dur:4, dim:.34, html:`
+      <div class="rule"></div>
+      <p class="lede">Вы знаете этот зал лучше всех.<br>
+      Эта страница — не о нём.</p>
+      <p class="lede"><em>Она о том, что будет дальше.</em></p>` },
+
+  /* 3D-интерлюдия: золотая пыль скроллом собирается в звезду Michelin */
+  { bg: BLACK, fade:2.4, dim:1, fx:'star', html:`
+      <p class="eyebrow">Один факт</p>
+      <p class="aphorism">Во всей Центральной Азии — <em style="font-style:inherit;color:var(--gold)">ноль</em> звёзд Michelin.</p>
+      <p class="lede" style="font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:24px">Пока.</p>` },
+
+  { bg: W+'T3_last.jpg', fade:2.2, dim:.18, html:`
+      <p class="eyebrow">Гид уже рядом</p>
+      <p class="aphorism">Дубай. Стамбул. Доха.<br>Michelin приходит туда, где есть к&nbsp;кому ехать.</p>` },
+
+  { bg: W+'T4_last.jpg', video:'T4', dur:4, dim:.18, html:`
+      <p class="eyebrow">Что нужно для звезды</p>
+      <p class="aphorism">Место. Система. Человек.</p>
+      <p class="sub">Место у вас уже есть. Лучшее в городе.</p>` },
+
+  /* 3D-интерлюдия: золотые нити — система, сплетающая ресторан */
+  { bg: BLACK, fade:2.2, dim:1, fx:'threads', html:`
+      <p class="eyebrow">Система</p>
+      <p class="aphorism">Система — то, что превращает красивый ресторан в&nbsp;великий.</p>
+      <p class="sub">Ей посвящена вторая половина этой истории.</p>` },
+
+  { bg: BLACK, fade:1.8, dim:0, center:true, fx:'embers', html:`
+      <p class="lede">Место есть.<br>Система будет.<br><br>
+      Начнём с главного.</p>
+      <p class="lede" style="margin-top:36px;font-family:'Playfair Display',serif;font-style:italic;font-size:27px;color:var(--gold)">С человека.</p>` },
+
+  { bg: W+'T7_last.jpg', video:'T7', dur:4, dim:.18, html:`
+      <p class="eyebrow">Шеф с двумя звёздами Michelin</p>
+      <h2>ЖАН АШНЕР</h2>` },
+
+  /* биография: каждый факт — экран */
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact"><span class="star">★★</span></p>
+      <p class="factname">La Maison de Boeuf · Брюссель</p>
+      <p class="facttext">Вторая звезда Michelin — в 36 лет.</p>` },
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact" style="font-size:clamp(38px,10.6vw,52px)">LE CORDON BLEU</p>
+      <p class="factname">Париж</p>
+      <p class="facttext">Школа высокой кухни.</p>` },
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact">7</p>
+      <p class="factname">Городов мира</p>
+      <p class="facttext">Лондон · Париж · Дубай · Милан · Сидней · Стамбул · Рио</p>` },
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact" style="font-size:clamp(34px,9.4vw,46px)">КОРОЛИ И&nbsp;КНЯЗЬЯ</p>
+      <p class="facttext" style="margin-top:18px">Готовил для монархов Бельгии, Нидерландов, князя Монако.</p>` },
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact" style="font-size:clamp(38px,11.4vw,56px)">СОЧИ 2014</p>
+      <p class="facttext" style="margin-top:18px">Бренд-шеф кулинарной службы Зимней Олимпиады.</p>` },
+  { bg: W+'T7_last.jpg', dim:.74, center:true, html:`
+      <p class="bigfact" style="font-size:clamp(34px,9.4vw,46px)">SHERATON ASTANA</p>
+      <p class="facttext" style="margin-top:18px">С 2023 — в Казахстане. SALTER'S и Emiliya.</p>` },
+  { bg: W+'T7_last.jpg', dim:.82, center:true, html:`
+      <p class="quote">«Моя мечта — принести первую звезду Michelin в&nbsp;Казахстан».</p>
+      <p class="quote-author">— Жан Ашнер</p>` },
+
+  { bg: W+'T8_last.jpg', video:'T8', dur:4, dim:.44, html:`
+      <div class="rule"></div>
+      <h2>ОДИН МЕСЯЦ.</h2>
+      <p class="lede">Жан Ашнер — на кухне Park Lane.</p>` },
+
+  { bg: W+'T8_last.jpg', dim:.8, html:`
+      <div class="rows">
+        <div class="row"><span class="n">01</span><span class="t">Неделя 1 · Погружение<span class="d">Аудит кухни, дегустация меню, анализ поставщиков.</span></span></div>
+        <div class="row"><span class="n">02</span><span class="t">Неделя 2 · Новое меню<span class="d">А-ля карт, завтраки, банкет-конструктор, пати-меню караоке.</span></span></div>
+        <div class="row"><span class="n">03</span><span class="t">Неделя 3 · Система<span class="d">Техкарты, новые поставщики, обучение команды.</span></span></div>
+        <div class="row"><span class="n">04</span><span class="t">Неделя 4 · Премьера<span class="d">Тестинг, сезонное меню, блюдо от шефа, гастроужин.</span></span></div>
+      </div>` },
+
+  { bg: W+'T8_last.jpg', dim:.84, center:true, html:`
+      <p class="aphorism">А дальше — он&nbsp;остаётся.</p>
+      <p class="lede" style="font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:26px;margin-top:12px">Бренд-шеф Park Lane.</p>
+      <p class="sub" style="margin-top:18px">Его имя — в вашем меню.<br>Его стандарты — на вашей кухне.<br>Постоянное кураторство: меню, команда, качество.</p>` },
+
+  /* GASTRO ULTIMA: сеть-система, каждый шаг — отдельный экран */
+  { bg: BLACK, fade:2.2, dim:0, fx:'net', html:`
+      <p class="sub" style="margin-bottom:14px">Кухня — сердце.<br>Но ресторан выигрывает системой.</p>
+      <h2 style="color:var(--gold);letter-spacing:.04em">GASTRO ULTIMA</h2>
+      <p class="lede">Система строится в три шага.</p>` },
+
+  { bg: BLACK, dim:0, fx:'net', center:true, html:`
+      <p class="bigfact">01</p>
+      <p class="factname">Аудит</p>
+      <p class="facttext">Операции, кухня, сервис, финансы. Честная картина того, как ресторан работает сегодня.</p>` },
+
+  { bg: BLACK, dim:0, fx:'net', center:true, html:`
+      <p class="bigfact">02</p>
+      <p class="factname">Аналитика</p>
+      <p class="facttext">Где теряются деньги: food cost, средний чек, загрузка. Цифры вместо ощущений.</p>` },
+
+  { bg: BLACK, dim:0, fx:'net', center:true, html:`
+      <p class="bigfact">03</p>
+      <p class="factname">Стратегия</p>
+      <p class="facttext">Маркетинговый план с понятными KPI. Запуск — вместе с вами.</p>` },
+
+  /* финал: Park Lane ночью проявляется из темноты */
+  { bg: W+'T11_last.jpg', fade:2.6, dim:.5, html:`
+      <h1 style="font-size:clamp(40px,11.4vw,52px)">PARK LANE</h1>
+      <p class="lede" style="font-family:'Playfair Display',serif;font-style:italic;font-size:23px;margin-top:8px">Новая глава.</p>
+      <p class="sub">Лучшие главы пишутся за столом.<br>Полное предложение — внутри.</p>
+      <a class="btn" href="media/KP.pdf" download>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/></svg>
+        Скачать коммерческое предложение
+      </a>` },
+];
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const CHEF_STEP = 7;
+const SCRUB_SVH = 42;            // svh скролла на 1 секунду перехода
+const N = SCENES.length;
+
+/* ---------- DOM ---------- */
+const track = document.getElementById('track');
+const ui = document.getElementById('ui');
+const vidsBox = document.getElementById('vids');
+const bgA = document.getElementById('bgA'), bgB = document.getElementById('bgB');
+const dimEl = document.getElementById('dim');
+const scrimEl = document.getElementById('scrim');
+const fab = document.getElementById('fab');
+const hint = document.getElementById('hint');
+const progress = document.querySelector('#progress i');
+
+/* сцены, спейсеры, зоны перемотки */
+const sceneEls = [], stepEls = [];
+SCENES.forEach((s,i)=>{
+  if(s.video || s.fade){
+    const z = document.createElement('div');
+    z.className = 'scrub';
+    z.style.height = ((s.dur || s.fade) * SCRUB_SVH) + 'svh';
+    track.appendChild(z);
+  }
+  const sp = document.createElement('div');
+  sp.className = 'step';
+  track.appendChild(sp);
+  stepEls.push(sp);
+
+  const el = document.createElement('div');
+  el.className = 'scene' + (s.center ? ' center' : '');
+  el.innerHTML = `<div class="inner">${s.html}</div>`;
+  ui.appendChild(el);
+  sceneEls.push(el);
+});
+
+/* пул видео */
+const vidEls = {};
+SCENES.forEach(s=>{
+  if(!s.video) return;
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.setAttribute('playsinline','');
+  v.preload = 'none'; v.dataset.name = s.video;
+  vidsBox.appendChild(v);
+  vidEls[s.video] = v;
+});
+/* видео целиком в blob: только так currentTime мотается мгновенно
+   и не зависит от поддержки Range-запросов на хостинге */
+function loadVid(name){
+  const v = vidEls[name];
+  if(v.dataset.state) return Promise.resolve(v.dataset.ready ? v : null);
+  v.dataset.state = 'loading';
+  return fetch(W + name + '.mp4')
+    .then(r=>r.blob())
+    .then(b=>new Promise(res=>{
+      v.src = URL.createObjectURL(b);
+      v.addEventListener('loadeddata', ()=>{ v.dataset.ready = '1'; res(v); }, {once:true});
+      v.load();
+    }))
+    .catch(()=>{ delete v.dataset.state; });
+}
+function manageWindow(idx){
+  SCENES.forEach((s,i)=>{
+    if(!s.video) return;
+    if(i >= idx-1 && i <= idx+3) loadVid(s.video);
+  });
+}
+
+/* ---------- якоря ---------- */
+let anchors = [], vh = innerHeight, maxY = 1;
+function measure(){
+  vh = innerHeight;
+  anchors = stepEls.map(el=>el.offsetTop);
+  maxY = document.documentElement.scrollHeight - vh;
+  fxResize();
+}
+addEventListener('resize', measure);
+
+/* ---------- фон: двойной буфер, управляется каждый кадр ---------- */
+let front = bgA, back = bgB;
+function bgSet(img, src){
+  if(src === null){ img.style.opacity = 0; img.dataset.src = ''; return; }
+  if(img.dataset.src !== src){ img.src = src; img.dataset.src = src; }
+}
+/* мгновенное состояние: front=srcA с альфой 1-mix, back=srcB с альфой mix */
+function bgMix(srcA, srcB, mix){
+  bgSet(front, srcA); bgSet(back, srcB);
+  front.style.opacity = srcA === null ? 0 : (1 - mix*.0); /* нижний слой всегда плотный */
+  back.style.opacity  = srcB === null ? 0 : mix;
+}
+function bgKenburns(on){
+  [front,back].forEach(im=>{
+    if(on && !im.classList.contains('kb')) im.classList.add('kb');
+    if(!on) im.classList.remove('kb');
+  });
+}
+
+/* ---------- текст ---------- */
+let shownText = -1;
+function showText(i){
+  if(shownText === i) return;
+  if(shownText >= 0) hideText(shownText);
+  shownText = i;
+  if(i < 0) return;
+  const el = sceneEls[i];
+  el.style.visibility = 'visible';
+  gsap.to(el, {opacity:1, duration:.3, overwrite:'auto'});
+  gsap.to(el.querySelectorAll('.inner>*'), {
+    opacity:1, y:0, duration:.8, ease:'power2.out', stagger:.13, overwrite:'auto'
+  });
+}
+function hideText(i){
+  const el = sceneEls[i]; if(!el) return;
+  gsap.to(el.querySelectorAll('.inner>*'), {opacity:0, y:-20, duration:.3, ease:'power2.in', overwrite:'auto'});
+  gsap.to(el, {opacity:0, duration:.3, overwrite:'auto',
+    onComplete:()=>{ el.style.visibility='hidden'; gsap.set(el.querySelectorAll('.inner>*'), {y:28}); }});
+}
+
+/* =====================================================================
+   3D-СЛОЙ: золотая пыль в перспективе.
+   Режим star — частицы скроллом собираются в звезду Michelin
+   (отмотка назад рассыпает её обратно в облако);
+   режим embers — медленно всплывающие искры на чёрном.
+   ===================================================================== */
+const fxCanvas = document.getElementById('fx');
+const fxCtx = fxCanvas.getContext('2d');
+let fxW = 0, fxH = 0, fxDPR = 1;
+function fxResize(){
+  fxDPR = Math.min(devicePixelRatio || 1, 2);
+  fxW = fxCanvas.clientWidth; fxH = fxCanvas.clientHeight;
+  fxCanvas.width = fxW * fxDPR; fxCanvas.height = fxH * fxDPR;
+}
+fxResize();
+
+/* контур пятиконечной звезды в 3D (лёгкий разброс по z даёт объём) */
+function starPoints(n){
+  const verts = [];
+  for(let k = 0; k < 10; k++){
+    const r = k % 2 === 0 ? 1 : .405;
+    const a = -Math.PI/2 + k * Math.PI/5;
+    verts.push([Math.cos(a)*r, Math.sin(a)*r]);
+  }
+  const pts = [], m = Math.ceil(n/10);
+  for(let s = 0; s < 10; s++){
+    const [x1,y1] = verts[s], [x2,y2] = verts[(s+1)%10];
+    for(let j = 0; j < m; j++){
+      const t = j/m;
+      pts.push([x1+(x2-x1)*t, y1+(y2-y1)*t]);
+    }
+  }
+  return pts;
+}
+
+const PALETTE = ['#C2A361','#C2A361','#C2A361','#D8BC7E','#D8BC7E','#F2ECE0','#9E8147'];
+const parts = [];
+(function initParts(){
+  const NPTS = 850;
+  const tgt = starPoints(Math.floor(NPTS*.7));
+  for(let k = 0; k < NPTS; k++){
+    const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1), r = Math.sqrt(Math.random());
+    const cl = [Math.sin(ph)*Math.cos(th)*r, Math.sin(ph)*Math.sin(th)*r, Math.cos(ph)*r];
+    let st;
+    if(k < tgt.length){
+      st = [tgt[k][0]+(Math.random()-.5)*.06, tgt[k][1]+(Math.random()-.5)*.06, (Math.random()-.5)*.16];
+    } else {
+      /* остальные — ореол пыли вокруг звезды */
+      st = [cl[0]*1.6, cl[1]*1.6, cl[2]*.6];
+    }
+    parts.push({
+      cl, st,
+      tw: Math.random()*Math.PI*2,
+      sp: .6+Math.random()*1.2,
+      sz: Math.random() < .04 ? 2.4 : .5+Math.random()*1.4,
+      k: .7+Math.random()*.8,
+      c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+    });
+  }
+})();
+
+/* золотые нити: потоковое поле, шёлк из света */
+const threads = [];
+for(let k = 0; k < 130; k++) threads.push({
+  x: Math.random(), y: Math.random(), hist: [],
+  sp: .5+Math.random(), w: .5+Math.random()*1.2,
+  tw: Math.random()*Math.PI*2,
+  c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+});
+function threadStep(th, t){
+  const a = Math.sin(th.y*2.4 + t*.3) + Math.cos(th.x*2.1 - t*.22) + Math.sin((th.x-th.y)*1.7 + t*.15);
+  th.x += Math.cos(a*1.2)*.0017*th.sp;
+  th.y += (Math.sin(a*1.2)*.55 - .62)*.002*th.sp; /* лёгкий подъём: искры всплывают */
+  th.hist.push([th.x, th.y]);
+  if(th.hist.length > 26) th.hist.shift();
+  if(th.x < -.05 || th.x > 1.05 || th.y < -.05 || th.y > 1.05){
+    th.x = Math.random(); th.y = Math.random(); th.hist.length = 0;
+  }
+}
+/* прогрев: чтобы нити появлялись сразу длинными кривыми, а не точками */
+for(let w = 0; w < 90; w++) for(const th of threads) threadStep(th, w*.016);
+
+/* сеть: узлы в 3D-шаре, связи между соседями «собираются» скроллом */
+const net = {nodes:[], links:[]};
+(function initNet(){
+  for(let k = 0; k < 64; k++){
+    const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1), r = Math.cbrt(Math.random());
+    net.nodes.push({
+      p: [Math.sin(ph)*Math.cos(th)*r, Math.sin(ph)*Math.sin(th)*r, Math.cos(ph)*r],
+      tw: Math.random()*Math.PI*2, sp: .6+Math.random()*1.2,
+      c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+    });
+  }
+  for(let a = 0; a < net.nodes.length; a++)
+    for(let b = a+1; b < net.nodes.length; b++){
+      const A = net.nodes[a].p, B = net.nodes[b].p;
+      if(Math.hypot(A[0]-B[0], A[1]-B[1], A[2]-B[2]) < .45) net.links.push([a,b]);
+    }
+})();
+
+const fxAcc = {star:0, embers:0, threads:0, net:0};
+let fxWas = false, starMorph = 0, netMorph = 0;
+function fxFrame(now, A){
+  const active = A.star > .004 || A.embers > .004 || A.threads > .004 || A.net > .004;
+  if(!active){
+    if(fxWas){
+      fxCtx.setTransform(1,0,0,1,0,0);
+      fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+      fxWas = false; starMorph = 0; netMorph = 0;
+    }
+    return;
+  }
+  fxWas = true;
+  fxCtx.setTransform(fxDPR,0,0,fxDPR,0,0);
+  fxCtx.clearRect(0,0,fxW,fxH);
+  fxCtx.globalCompositeOperation = 'lighter';
+
+  if(A.star > .004){
+    const aStar = A.star;
+    starMorph += (aStar - starMorph) * (reduced ? 1 : .07);
+    const e = starMorph < .5 ? 2*starMorph*starMorph : 1 - Math.pow(-2*starMorph+2,2)/2;
+    const cx = fxW/2, cy = fxH*.42, R = Math.min(fxW,fxH)*.31;
+    const rot = reduced ? 0 : Math.sin(now*.00037)*.5;
+    const ca = Math.cos(rot), sa = Math.sin(rot);
+    for(const pt of parts){
+      const ek = Math.pow(e, pt.k); /* у каждой частицы свой темп сборки */
+      const x = pt.cl[0]+(pt.st[0]-pt.cl[0])*ek,
+            y = pt.cl[1]+(pt.st[1]-pt.cl[1])*ek,
+            z = pt.cl[2]+(pt.st[2]-pt.cl[2])*ek;
+      const rx = x*ca + z*sa, rz = -x*sa + z*ca;
+      const persp = 2.3/(2.3+rz);
+      const tw = reduced ? 1 : .55+.45*Math.sin(now*.0022*pt.sp+pt.tw);
+      fxCtx.globalAlpha = Math.min(1, aStar*tw*persp*.9);
+      fxCtx.fillStyle = pt.c;
+      fxCtx.beginPath();
+      fxCtx.arc(cx+rx*R*persp, cy+y*R*persp, pt.sz*persp, 0, 6.2832);
+      fxCtx.fill();
+    }
+  } else starMorph = 0;
+
+  if(A.embers > .004){
+    for(let j = 0; j < parts.length; j += 3){
+      const pt = parts[j];
+      const prog = ((pt.cl[1]+1)*.5 + (reduced ? 0 : now*.000028*pt.sp)) % 1;
+      const ex = fxW*.5 + pt.cl[0]*fxW*.55 + (reduced ? 0 : Math.sin(now*.0007*pt.sp+pt.tw)*14);
+      const ey = fxH*(1.06 - prog*1.12);
+      const tw = reduced ? .6 : .4+.4*Math.sin(now*.0019*pt.sp+pt.tw);
+      fxCtx.globalAlpha = A.embers*tw*.8;
+      fxCtx.fillStyle = pt.c;
+      fxCtx.beginPath();
+      fxCtx.arc(ex, ey, pt.sz*.8, 0, 6.2832);
+      fxCtx.fill();
+    }
+  }
+
+  if(A.threads > .004){
+    const t = now*.001;
+    for(const th of threads){
+      if(!reduced) threadStep(th, t);
+      const tw = .5+.5*Math.sin(now*.0016*th.sp+th.tw);
+      fxCtx.strokeStyle = fxCtx.fillStyle = th.c;
+      if(reduced || th.hist.length < 2){
+        fxCtx.globalAlpha = A.threads*tw*.5;
+        fxCtx.beginPath();
+        fxCtx.arc(th.x*fxW, th.y*fxH, th.w, 0, 6.2832);
+        fxCtx.fill();
+        continue;
+      }
+      fxCtx.globalAlpha = A.threads*tw*.5;
+      fxCtx.lineWidth = th.w;
+      fxCtx.beginPath();
+      fxCtx.moveTo(th.hist[0][0]*fxW, th.hist[0][1]*fxH);
+      for(let q = 1; q < th.hist.length; q++) fxCtx.lineTo(th.hist[q][0]*fxW, th.hist[q][1]*fxH);
+      fxCtx.stroke();
+      /* светящаяся головка нити */
+      const hd = th.hist[th.hist.length-1];
+      fxCtx.globalAlpha = A.threads*tw*.9;
+      fxCtx.beginPath();
+      fxCtx.arc(hd[0]*fxW, hd[1]*fxH, th.w*1.3, 0, 6.2832);
+      fxCtx.fill();
+    }
+  }
+
+  if(A.net > .004){
+    netMorph += (A.net - netMorph) * (reduced ? 1 : .06);
+    const cx = fxW/2, cy = fxH*.26, R = Math.min(fxW,fxH)*.32;
+    const rot = reduced ? 0 : now*.00016;
+    const ca = Math.cos(rot), sa = Math.sin(rot);
+    const proj = net.nodes.map(nd=>{
+      const [x,y,z] = nd.p;
+      const rx = x*ca + z*sa, rz = -x*sa + z*ca;
+      const k = 2.3/(2.3+rz);
+      return [cx+rx*R*k, cy+y*R*k, k];
+    });
+    /* связи прорисовываются по мере сборки сети */
+    const lim = Math.floor(net.links.length * Math.min(1, netMorph*1.15));
+    fxCtx.lineWidth = .7;
+    for(let q = 0; q < lim; q++){
+      const [a,b] = net.links[q];
+      fxCtx.globalAlpha = A.net * netMorph * Math.min(proj[a][2], proj[b][2]) * .3;
+      fxCtx.strokeStyle = '#C2A361';
+      fxCtx.beginPath();
+      fxCtx.moveTo(proj[a][0], proj[a][1]);
+      fxCtx.lineTo(proj[b][0], proj[b][1]);
+      fxCtx.stroke();
+    }
+    for(let q = 0; q < net.nodes.length; q++){
+      const nd = net.nodes[q], pj = proj[q];
+      const tw = reduced ? .8 : .5+.5*Math.sin(now*.002*nd.sp+nd.tw);
+      fxCtx.globalAlpha = A.net*tw*.9;
+      fxCtx.fillStyle = nd.c;
+      fxCtx.beginPath();
+      fxCtx.arc(pj[0], pj[1], 1.5*pj[2], 0, 6.2832);
+      fxCtx.fill();
+    }
+  } else netMorph = 0;
+
+  fxCtx.globalAlpha = 1;
+  fxCtx.globalCompositeOperation = 'source-over';
+}
+
+/* =====================================================================
+   ГЛАВНЫЙ ЦИКЛ: скролл → кадр фильма
+   ===================================================================== */
+let started = false;
+let curIdx = 0;
+let activeV = null, targetT = 0;
+
+function setActiveVideo(v){
+  if(activeV === v) return;
+  if(activeV) activeV.style.opacity = 0;
+  activeV = v;
+}
+
+function frame(){
+  requestAnimationFrame(frame);
+  if(!started) return;
+  const y = scrollY;
+
+  /* интервал между якорями */
+  let i = 0;
+  while(i < N-1 && y >= anchors[i+1]) i++;
+  const next = i < N-1 ? i+1 : -1;
+  const segLen = next > 0 ? (anchors[next] - anchors[i]) : 1;
+  const p = next > 0 ? Math.min(1, Math.max(0, (y - anchors[i]) / segLen)) : 0;
+
+  const sNext = next > 0 ? SCENES[next] : null;
+  const v = sNext && sNext.video ? vidEls[sNext.video] : null;
+  const scrubbing = (v || (sNext && sNext.fade)) && p > 0.012 && p < 0.988;
+
+  /* какая сцена «опорная» для текста/затемнения */
+  const settled = p < 0.06 ? i : (p > 0.94 && next > 0 ? next : -1);
+  curIdx = p < 0.5 ? i : next;
+  manageWindow(curIdx);
+
+  /* --- фон и видео --- */
+  if(scrubbing && v && !reduced && v.readyState >= 2){
+    /* подложка = кадр-фон следующей сцены; видео сверху, кадр = позиция скролла */
+    bgMix(SCENES[i].bg, sNext.bg, 1);
+    bgKenburns(false);
+    setActiveVideo(v);
+    v.style.opacity = 1;
+    const t = (p - 0.012) / 0.976 * (v.duration || sNext.dur);
+    targetT = Math.min(t, (v.duration || sNext.dur) - 0.04);
+  } else if(scrubbing){
+    /* fade-переход, видео ещё не готово или reduced-motion: чистый диззолв кадров */
+    setActiveVideo(null);
+    bgMix(SCENES[i].bg, sNext.bg, p);
+    if(sNext.bg === null) front.style.opacity = 1 - p; /* уход в темноту */
+    bgKenburns(false);
+  } else {
+    setActiveVideo(null);
+    const s = p <= 0.012 || !sNext ? SCENES[i] : SCENES[next];
+    bgMix(s.bg, null, 0);
+    bgKenburns(!reduced);
+  }
+
+  /* покадровая перемотка с лёгкой инерцией */
+  if(activeV && activeV.readyState >= 2){
+    const cur = activeV.currentTime;
+    const d = targetT - cur;
+    if(Math.abs(d) > 0.034) activeV.currentTime = cur + d * 0.38;
+  }
+
+  /* 3D-слой: альфа каждого режима следует за скроллом, как и всё остальное */
+  for(const nm in fxAcc){
+    let a = SCENES[i].fx === nm ? 1 : 0;
+    if(next > 0) a += ((SCENES[next].fx === nm ? 1 : 0) - a) * p;
+    fxAcc[nm] = a;
+  }
+  fxFrame(performance.now(), fxAcc);
+
+  /* затемнение: плавная интерполяция между сценами */
+  const dimNow = next > 0
+    ? SCENES[i].dim + (SCENES[next].dim - SCENES[i].dim) * p
+    : SCENES[i].dim;
+  dimEl.style.opacity = dimNow;
+  scrimEl.style.opacity = (curIdx >= 0 && SCENES[curIdx].bg === null) ? 0 : .45;
+
+  /* текст, прогресс, кнопка, подсказка */
+  showText(settled);
+  progress.style.width = (y / maxY * 100) + '%';
+  fab.classList.toggle('on', curIdx > CHEF_STEP && curIdx < N-1);
+  hint.style.opacity = (y < vh * .4) ? 1 : 0;
+}
+requestAnimationFrame(frame);
+
+/* =====================================================================
+   ПРЕЛОАДЕР: кадры-фоны, T1, шрифты; минимум 1.8 c
+   ===================================================================== */
+(function preload(){
+  const bar = document.querySelector('#plbar i');
+  const assets = [];
+  SCENES.forEach(s=>{ if(s.bg && !assets.includes(s.bg)) assets.push(s.bg); });
+  SCENES.forEach(s=>{ if(s.video){ const f = W+s.video+'_first.jpg'; if(!assets.includes(f)) assets.push(f); }});
+
+  let done = 0;
+  const total = assets.length + 2;
+  const tick = ()=>{ done++; bar.style.width = Math.min(100, done/total*100)+'%'; };
+
+  const jobs = assets.map(src=>new Promise(res=>{
+    const im = new Image();
+    im.onload = im.onerror = ()=>{ tick(); res(); };
+    im.src = src;
+  }));
+
+  jobs.push(Promise.race([
+    loadVid('T1'),
+    new Promise(res=>setTimeout(res, 7000)),
+  ]).then(tick));
+  jobs.push((document.fonts ? document.fonts.ready : Promise.resolve()).then(tick));
+  jobs.push(new Promise(res=>setTimeout(res, 1800)));
+
+  Promise.all(jobs).then(()=>{
+    bar.style.width = '100%';
+    scrollTo(0,0);
+    measure();
+    started = true;
+    const pl = document.getElementById('preloader');
+    gsap.to(pl, {opacity:0, duration:.9, ease:'power2.inOut', delay:.3,
+      onComplete:()=>pl.remove()});
+  });
+})();
+</script>
+</body>
+</html>

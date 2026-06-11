@@ -1,0 +1,17 @@
+# внутренние материалы — не публиковать
+park-lane-kp-final-v3.md
+.claude/
+
+# исходники медиа (на сайте используются только media/web/)
+/media/*.jpg
+/media/*.png
+/media/*.mp4
+
+# веб-видео, которые сайт больше не использует
+/media/web/T2.mp4
+/media/web/T3.mp4
+/media/web/T5.mp4
+/media/web/T6.mp4
+/media/web/T9.mp4
+/media/web/T10.mp4
+/media/web/T11.mp4
