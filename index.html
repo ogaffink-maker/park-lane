@@ -17,12 +17,12 @@
   --col:min(100vw,480px);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-snap-type:y proximity}
-body{background:var(--bg);color:var(--ivory);font-family:'Manrope',sans-serif;overflow-x:hidden}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ivory);font-family:'Manrope',sans-serif;touch-action:none}
 img,video{display:block}
 
-/* ---------- драйвер скролла: якоря сцен + зоны покадровой перемотки ---------- */
-.step{height:100svh;scroll-snap-align:start}
+/* ---------- разметка таймлайна: якоря сцен + зоны переходов (скролл виртуальный) ---------- */
+.step{height:100svh}
 .scrub{/* высота задаётся из JS: длиннее ролик — длиннее перемотка */}
 
 /* ---------- фиксированная кино-сцена ---------- */
@@ -245,8 +245,7 @@ const SCENES = [
   /* 3D-интерлюдия: золотые нити — система, сплетающая ресторан */
   { bg: BLACK, fade:2.2, dim:1, fx:'threads', html:`
       <p class="eyebrow">Система</p>
-      <p class="aphorism">Система — то, что превращает красивый ресторан в&nbsp;великий.</p>
-      <p class="sub">Ей посвящена вторая половина этой истории.</p>` },
+      <p class="aphorism">Система — то, что превращает красивый ресторан в&nbsp;великий.</p>` },
 
   { bg: BLACK, fade:1.8, dim:0, center:true, fx:'embers', html:`
       <p class="lede">Место есть.<br>Система будет.<br><br>
@@ -407,10 +406,72 @@ let anchors = [], vh = innerHeight, maxY = 1;
 function measure(){
   vh = innerHeight;
   anchors = stepEls.map(el=>el.offsetTop);
-  maxY = document.documentElement.scrollHeight - vh;
+  maxY = anchors[anchors.length-1] || 1;
   fxResize();
 }
-addEventListener('resize', measure);
+addEventListener('resize', ()=>{ measure(); cur = anchors[targetIdx] || 0; anim = null; });
+
+/* =====================================================================
+   ВИРТУАЛЬНЫЙ СКРОЛЛ: один свайп / тик колеса = один блок.
+   Палец мотает фильм вживую, отпускание доводит ровно до якоря.
+   ===================================================================== */
+let cur = 0, targetIdx = 0, anim = null;
+const easeIO = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+function goTo(idx){
+  idx = Math.max(0, Math.min(N-1, idx));
+  targetIdx = idx;
+  const to = anchors[idx] || 0;
+  const dist = Math.abs(to - cur);
+  if(dist < 1){ anim = null; cur = to; return; }
+  anim = {from:cur, to, start:performance.now(), dur: 500 + Math.min(1600, dist/vh*240)};
+}
+
+let wheelLock = 0;
+addEventListener('wheel', e=>{
+  e.preventDefault();
+  if(!started) return;
+  const now = performance.now();
+  if(now < wheelLock || Math.abs(e.deltaY) < 12) return;
+  goTo(targetIdx + (e.deltaY > 0 ? 1 : -1));
+  wheelLock = now + (anim ? anim.dur : 0) + 300;
+}, {passive:false});
+
+addEventListener('keydown', e=>{
+  if(!started) return;
+  if(e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' '){ e.preventDefault(); goTo(targetIdx+1); }
+  if(e.key === 'ArrowUp' || e.key === 'PageUp'){ e.preventDefault(); goTo(targetIdx-1); }
+});
+
+let drag = null;
+addEventListener('touchstart', e=>{
+  if(!started) return;
+  anim = null;
+  let n0 = 0;
+  for(let k = 0; k < N; k++) if(Math.abs(anchors[k]-cur) < Math.abs(anchors[n0]-cur)) n0 = k;
+  drag = {y0:e.touches[0].clientY, cur0:cur, n0, prevY:e.touches[0].clientY, prevT:performance.now(), vel:0};
+}, {passive:true});
+addEventListener('touchmove', e=>{
+  if(!drag) return;
+  e.preventDefault();
+  const t = e.touches[0], now = performance.now();
+  const dt = Math.max(1, now - drag.prevT);
+  drag.vel = drag.vel*.6 + ((drag.prevY - t.clientY)/dt)*.4;
+  drag.prevY = t.clientY; drag.prevT = now;
+  /* живой скраб, но не дальше соседних блоков */
+  const lo = anchors[Math.max(0, drag.n0-1)], hi = anchors[Math.min(N-1, drag.n0+1)];
+  cur = Math.max(lo, Math.min(hi, drag.cur0 + (drag.y0 - t.clientY)*1.7));
+}, {passive:false});
+addEventListener('touchend', ()=>{
+  if(!drag) return;
+  const moved = cur - anchors[drag.n0];
+  let dest = drag.n0;
+  if(drag.vel > .3) dest = drag.n0 + 1;
+  else if(drag.vel < -.3) dest = drag.n0 - 1;
+  else if(moved > 90) dest = drag.n0 + 1;
+  else if(moved < -90) dest = drag.n0 - 1;
+  goTo(dest);
+  drag = null;
+});
 
 /* ---------- фон: двойной буфер, управляется каждый кадр ---------- */
 let front = bgA, back = bgB;
@@ -689,7 +750,13 @@ function setActiveVideo(v){
 function frame(){
   requestAnimationFrame(frame);
   if(!started) return;
-  const y = scrollY;
+  const now = performance.now();
+  if(anim){
+    const t = (now - anim.start)/anim.dur;
+    if(t >= 1){ cur = anim.to; anim = null; }
+    else cur = anim.from + (anim.to - anim.from)*easeIO(t);
+  }
+  const y = cur;
 
   /* интервал между якорями */
   let i = 0;
@@ -720,7 +787,8 @@ function frame(){
     /* fade-переход, видео ещё не готово или reduced-motion: чистый диззолв кадров */
     setActiveVideo(null);
     bgMix(SCENES[i].bg, sNext.bg, p);
-    if(sNext.bg === null) front.style.opacity = 1 - p; /* уход в темноту */
+    /* уход в темноту: гасим нижний слой, только если в нём правда есть кадр */
+    if(sNext.bg === null && SCENES[i].bg !== null) front.style.opacity = 1 - p;
     bgKenburns(false);
   } else {
     setActiveVideo(null);
@@ -742,7 +810,7 @@ function frame(){
     if(next > 0) a += ((SCENES[next].fx === nm ? 1 : 0) - a) * p;
     fxAcc[nm] = a;
   }
-  fxFrame(performance.now(), fxAcc);
+  fxFrame(now, fxAcc);
 
   /* затемнение: плавная интерполяция между сценами */
   const dimNow = next > 0
@@ -787,8 +855,8 @@ requestAnimationFrame(frame);
 
   Promise.all(jobs).then(()=>{
     bar.style.width = '100%';
-    scrollTo(0,0);
     measure();
+    cur = 0; targetIdx = 0; anim = null;
     started = true;
     const pl = document.getElementById('preloader');
     gsap.to(pl, {opacity:0, duration:.9, ease:'power2.inOut', delay:.3,
