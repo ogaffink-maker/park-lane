@@ -42,7 +42,7 @@ img,video{display:block}
 }
 #scrim{
   position:absolute;inset:0;pointer-events:none;opacity:.45;
-  background:linear-gradient(180deg,rgba(11,11,13,.55) 0%,rgba(11,11,13,0) 30%,rgba(11,11,13,0) 52%,rgba(11,11,13,.74) 100%);
+  background:linear-gradient(180deg,rgba(11,11,13,.6) 0%,rgba(11,11,13,0) 30%,rgba(11,11,13,0) 46%,rgba(11,11,13,.92) 100%);
 }
 #dim{position:absolute;inset:0;pointer-events:none;background:var(--bg);opacity:0}
 #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -58,7 +58,7 @@ img,video{display:block}
   opacity:0;visibility:hidden;
 }
 .scene.center{justify-content:center;text-align:center;padding-bottom:0}
-.scene .inner{text-shadow:0 1px 4px rgba(11,11,13,.55),0 4px 26px rgba(11,11,13,.5)}
+.scene .inner{text-shadow:0 1px 5px rgba(11,11,13,.75),0 4px 30px rgba(11,11,13,.65)}
 .scene .inner>*{opacity:0;transform:translateY(28px)}
 .eyebrow{
   font-size:14px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;
@@ -85,6 +85,11 @@ h2{font-size:clamp(32px,9.6vw,44px)}
 .facttext{font-size:20px;line-height:1.62;color:#D6CFC2;margin-top:14px;max-width:30ch}
 .center .facttext{margin-left:auto;margin-right:auto}
 .quote{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(30px,8.6vw,38px);line-height:1.38}
+.punch{font-family:'Playfair Display',serif;font-style:italic;font-size:23px;line-height:1.45;color:var(--gold);margin-top:14px}
+.svc{margin-top:24px}
+.center .svc{max-width:30ch;margin-left:auto;margin-right:auto}
+.svc div{font-size:18px;line-height:1.6;color:#D6CFC2;padding:9px 0;border-bottom:1px solid rgba(194,163,97,.18)}
+.svc div:last-child{border-bottom:none}
 .quote-author{margin-top:24px;font-size:14px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .rule{width:46px;height:1px;background:var(--gold);opacity:.85;margin:0 0 20px}
 .center .rule{margin:0 auto 20px}
@@ -233,11 +238,11 @@ const SCENES = [
       <p class="aphorism">Во всей Центральной Азии — <em style="font-style:inherit;color:var(--gold)">ноль</em> звёзд Michelin.</p>
       <p class="lede" style="font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:24px">Пока.</p>` },
 
-  { bg: W+'T3_last.jpg', fade:2.2, dim:.18, html:`
+  { bg: W+'T3_last.jpg', fade:2.2, dim:.3, html:`
       <p class="eyebrow">Гид уже рядом</p>
       <p class="aphorism">Дубай. Стамбул. Доха.<br>Michelin приходит туда, где есть к&nbsp;кому ехать.</p>` },
 
-  { bg: W+'T4_last.jpg', video:'T4', dur:4, dim:.18, html:`
+  { bg: W+'T4_last.jpg', video:'T4', dur:4, dim:.32, html:`
       <p class="eyebrow">Что нужно для звезды</p>
       <p class="aphorism">Место. Система. Человек.</p>
       <p class="sub">Место у вас уже есть. Лучшее в городе.</p>` },
@@ -307,19 +312,49 @@ const SCENES = [
       <p class="lede">Система строится в три шага.</p>` },
 
   { bg: BLACK, dim:0, fx:'net', center:true, html:`
+      <p class="bigfact">15</p>
+      <p class="factname">лет в ресторанной сфере</p>
+      <p class="punch">Сотни кухонь. Тысячи решений.</p>
+      <p class="facttext">Мы знаем, где рестораны теряют деньги — и&nbsp;как их возвращать.</p>` },
+
+  { bg: BLACK, dim:0, fx:'net', center:true, html:`
       <p class="bigfact">01</p>
       <p class="factname">Аудит</p>
-      <p class="facttext">Операции, кухня, сервис, финансы. Честная картина того, как ресторан работает сегодня.</p>` },
+      <p class="punch">Нельзя улучшить то, что не&nbsp;измерено.</p>
+      <div class="svc">
+        <div>Операции и процессы</div>
+        <div>Кухня и меню</div>
+        <div>Сервис и зал</div>
+        <div>Финансы и закупки</div>
+      </div>` },
 
   { bg: BLACK, dim:0, fx:'net', center:true, html:`
       <p class="bigfact">02</p>
       <p class="factname">Аналитика</p>
-      <p class="facttext">Где теряются деньги: food cost, средний чек, загрузка. Цифры вместо ощущений.</p>` },
+      <p class="punch">Цифры вместо ощущений.</p>
+      <div class="svc">
+        <div>Food cost и маржа каждого блюда</div>
+        <div>Средний чек и его структура</div>
+        <div>Загрузка залов по дням и часам</div>
+        <div>Точки, где утекают деньги</div>
+      </div>` },
 
   { bg: BLACK, dim:0, fx:'net', center:true, html:`
       <p class="bigfact">03</p>
       <p class="factname">Стратегия</p>
-      <p class="facttext">Маркетинговый план с понятными KPI. Запуск — вместе с вами.</p>` },
+      <p class="punch">План, который исполняется.</p>
+      <div class="svc">
+        <div>Позиционирование и маркетинговый план</div>
+        <div>Понятные KPI для команды</div>
+        <div>Запуск — вместе с вами</div>
+        <div>Сопровождение до результата</div>
+      </div>` },
+
+  /* итог: панч, связывающий шефа и систему */
+  { bg: BLACK, dim:0, center:true, fx:'embers', html:`
+      <p class="eyebrow">Итог</p>
+      <p class="aphorism">Имя, которое приводит гостей.<br>Система, которая превращает их&nbsp;в&nbsp;прибыль.</p>
+      <p class="sub" style="margin-top:20px">Шеф ★★ Michelin · новое меню · стандарты кухни<br>аудит · аналитика · стратегия с KPI</p>` },
 
   /* финал: Park Lane ночью проявляется из темноты */
   { bg: W+'T11_last.jpg', fade:2.6, dim:.5, html:`
@@ -419,11 +454,22 @@ let cur = 0, targetIdx = 0, anim = null;
 const easeIO = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
 function goTo(idx){
   idx = Math.max(0, Math.min(N-1, idx));
+  const prev = targetIdx;
   targetIdx = idx;
   const to = anchors[idx] || 0;
   const dist = Math.abs(to - cur);
   if(dist < 1){ anim = null; cur = to; return; }
-  anim = {from:cur, to, start:performance.now(), dur: 500 + Math.min(1600, dist/vh*240)};
+  /* кино-переходы проигрываем неспешно: видео — почти в своём темпе */
+  let dur;
+  if(Math.abs(idx - prev) === 1){
+    const seg = SCENES[Math.max(idx, prev)] || {};
+    dur = seg.video ? (seg.dur || 4)*700 + 400 : (seg.fade ? 1800 : 950);
+    const segLen = Math.abs((anchors[idx]||0) - (anchors[prev]||0)) || dist;
+    dur = dur * Math.min(1, dist/segLen) + 250;
+  } else {
+    dur = 600 + Math.min(2200, dist/vh*300);
+  }
+  anim = {from:cur, to, start:performance.now(), dur};
 }
 
 let wheelLock = 0;
@@ -799,9 +845,9 @@ function frame(){
 
   /* покадровая перемотка с лёгкой инерцией */
   if(activeV && activeV.readyState >= 2){
-    const cur = activeV.currentTime;
-    const d = targetT - cur;
-    if(Math.abs(d) > 0.034) activeV.currentTime = cur + d * 0.38;
+    const vt = activeV.currentTime;
+    const d = targetT - vt;
+    if(Math.abs(d) > 0.02) activeV.currentTime = vt + d * 0.5;
   }
 
   /* 3D-слой: альфа каждого режима следует за скроллом, как и всё остальное */
